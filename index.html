@@ -1,0 +1,1353 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MONEY AZ - Plataforma de Investimento</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        gold: {
+                            400: '#FFE169',
+                            500: '#FFD700',
+                            600: '#D4AF37',
+                            700: '#AA820A'
+                        },
+                        dark: {
+                            900: '#0B0C10',
+                            800: '#121212',
+                            700: '#1E1E24',
+                            600: '#2A2A32'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #0B0C10;
+            color: #F3F4F6;
+            font-family: 'Inter', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .gold-gradient-text {
+            background: linear-gradient(135deg, #FFF099 0%, #FFD700 50%, #B8860B 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .gold-bg-gradient {
+            background: linear-gradient(135deg, #FFD700 0%, #D4AF37 100%);
+        }
+        .gold-btn-gradient {
+            background: linear-gradient(135deg, #FFD700 0%, #C59B27 100%);
+        }
+        .gold-btn-gradient:active {
+            transform: scale(0.98);
+        }
+        .glass-card {
+            background: rgba(30, 30, 36, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 215, 0, 0.12);
+        }
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body class="pb-24 pt-4 max-w-md mx-auto min-h-screen relative shadow-2xl bg-dark-900 border-x border-gray-800/40">
+
+    <!-- Notificações Toast em Tempo Real -->
+    <div id="toast" class="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 w-11/12 max-w-sm hidden transition-all duration-300">
+        <div id="toast-content" class="bg-dark-700 border-l-4 border-gold-500 text-white p-4 rounded-r shadow-2xl flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <i id="toast-icon" class="fas font-bold text-gold-500 text-xl"></i>
+                <p id="toast-message" class="text-sm font-medium"></p>
+            </div>
+            <button onclick="hideToast()" class="text-gray-400 hover:text-white"><i class="fas fa-times"></i></button>
+        </div>
+    </div>
+
+    <!-- Cabeçalho Principal -->
+    <header class="px-5 mb-4 flex items-center justify-between">
+        <div class="flex items-center space-x-3">
+            <div class="w-10 h-10 rounded-full gold-bg-gradient flex items-center justify-center font-black text-dark-900 text-xl shadow-lg shadow-gold-500/20">
+                AZ
+            </div>
+            <div>
+                <h1 class="font-extrabold text-lg tracking-wider gold-gradient-text">MONEY AZ</h1>
+                <p class="text-[10px] text-gray-400 uppercase tracking-widest font-semibold">Investimentos em Angola</p>
+            </div>
+        </div>
+        <div class="flex items-center space-x-2">
+            <div id="connection-status" class="flex items-center space-x-1.5 bg-dark-700 px-2.5 py-1 rounded-full border border-gray-700">
+                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span class="text-[10px] font-semibold text-emerald-400">Nuvem On</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- ÁREA DE AUTENTICAÇÃO (Se não estiver logado) -->
+    <div id="auth-screen" class="px-5 my-6 hidden">
+        <div class="glass-card p-6 rounded-2xl text-center relative overflow-hidden">
+            <div class="absolute -top-10 -right-10 w-32 h-32 bg-gold-500/10 rounded-full blur-2xl"></div>
+            
+            <!-- Toggle Login / Registo -->
+            <div class="flex bg-dark-800 p-1 rounded-xl mb-6 border border-gray-800">
+                <button id="tab-login-btn" onclick="switchAuthTab('login')" class="flex-1 py-2 text-xs font-bold rounded-lg bg-gold-500 text-dark-900 transition">Entrar</button>
+                <button id="tab-register-btn" onclick="switchAuthTab('register')" class="flex-1 py-2 text-xs font-bold rounded-lg text-gray-400 transition">Criar Conta</button>
+            </div>
+
+            <!-- Form de Login -->
+            <form id="login-form" onsubmit="handleLogin(event)" class="space-y-4">
+                <div class="text-left">
+                    <label class="text-xs text-gray-400 mb-1 block">Número de Telefone</label>
+                    <div class="relative">
+                        <span class="absolute left-3 top-3 text-gray-500 text-sm">+244</span>
+                        <input type="tel" id="login-phone" required placeholder="9XXXXXXXX" class="w-full bg-dark-800 border border-gray-700 rounded-xl py-2.5 pl-14 pr-3 text-sm focus:border-gold-500 focus:outline-none text-white">
+                    </div>
+                </div>
+                <div class="text-left">
+                    <label class="text-xs text-gray-400 mb-1 block">Palavra-passe</label>
+                    <input type="password" id="login-pass" required placeholder="••••••••" class="w-full bg-dark-800 border border-gray-700 rounded-xl py-2.5 px-3 text-sm focus:border-gold-500 focus:outline-none text-white">
+                </div>
+                <button type="submit" class="w-full py-3 rounded-xl gold-btn-gradient text-dark-900 font-extrabold text-sm shadow-lg shadow-gold-500/20 mt-2">
+                    Aceder à Minha Conta
+                </button>
+            </form>
+
+            <!-- Form de Registo -->
+            <form id="register-form" onsubmit="handleRegister(event)" class="space-y-4 hidden">
+                <div class="text-left">
+                    <label class="text-xs text-gray-400 mb-1 block">Nome Completo</label>
+                    <input type="text" id="reg-name" required placeholder="Seu Nome" class="w-full bg-dark-800 border border-gray-700 rounded-xl py-2.5 px-3 text-sm focus:border-gold-500 focus:outline-none text-white">
+                </div>
+                <div class="text-left">
+                    <label class="text-xs text-gray-400 mb-1 block">Número de Telefone</label>
+                    <div class="relative">
+                        <span class="absolute left-3 top-3 text-gray-500 text-sm">+244</span>
+                        <input type="tel" id="reg-phone" required placeholder="9XXXXXXXX" class="w-full bg-dark-800 border border-gray-700 rounded-xl py-2.5 pl-14 pr-3 text-sm focus:border-gold-500 focus:outline-none text-white">
+                    </div>
+                </div>
+                <div class="text-left">
+                    <label class="text-xs text-gray-400 mb-1 block">Criar Palavra-passe</label>
+                    <input type="password" id="reg-pass" required placeholder="••••••••" class="w-full bg-dark-800 border border-gray-700 rounded-xl py-2.5 px-3 text-sm focus:border-gold-500 focus:outline-none text-white">
+                </div>
+                <button type="submit" class="w-full py-3 rounded-xl gold-btn-gradient text-dark-900 font-extrabold text-sm shadow-lg shadow-gold-500/20 mt-2">
+                    Registar e Ganhar Bónus
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- SEPARADORES PRINCIPAIS DA APLICAÇÃO -->
+    <main id="app-content" class="px-5 space-y-5">
+
+        <!-- 1. SEPARADOR INÍCIO -->
+        <section id="tab-home" class="tab-page space-y-4">
+            <!-- Card de Saldo Principal -->
+            <div class="glass-card p-5 rounded-2xl relative overflow-hidden border border-gold-500/20">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-xs text-gray-400 font-medium">Saldo Disponível</p>
+                        <h2 id="user-balance" class="text-3xl font-black text-white mt-1">0 <span class="text-gold-500 text-lg">Kz</span></h2>
+                    </div>
+                    <button onclick="switchTab('tab-deposit')" class="gold-btn-gradient px-4 py-2 rounded-xl text-dark-900 font-bold text-xs shadow-md shadow-gold-500/20 flex items-center space-x-1.5">
+                        <i class="fas fa-plus-circle"></i>
+                        <span>Depositar</span>
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3 mt-5 pt-4 border-t border-gray-800">
+                    <div class="bg-dark-800/60 p-2.5 rounded-xl border border-gray-800">
+                        <p class="text-[10px] text-gray-400">Rendimento Diário Estimado</p>
+                        <p id="daily-income" class="text-sm font-bold text-emerald-400 mt-0.5">0 Kz</p>
+                    </div>
+                    <div class="bg-dark-800/60 p-2.5 rounded-xl border border-gray-800">
+                        <p class="text-[10px] text-gray-400">Pacotes Ativos</p>
+                        <p id="active-packages-count" class="text-sm font-bold text-gold-500 mt-0.5">0 Pl</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Botões de Ações Rápidas -->
+            <div class="grid grid-cols-4 gap-2 text-center">
+                <button onclick="switchTab('tab-deposit')" class="glass-card p-3 rounded-xl hover:border-gold-500/40 transition">
+                    <div class="w-9 h-9 mx-auto rounded-full bg-gold-500/10 text-gold-500 flex items-center justify-center mb-1 text-sm">
+                        <i class="fas fa-wallet"></i>
+                    </div>
+                    <span class="text-[10px] font-medium text-gray-300 block">Recarga</span>
+                </button>
+                <button onclick="openWithdrawModal()" class="glass-card p-3 rounded-xl hover:border-gold-500/40 transition">
+                    <div class="w-9 h-9 mx-auto rounded-full bg-emerald-500/10 text-emerald-400 flex items-center justify-center mb-1 text-sm">
+                        <i class="fas fa-arrow-up-from-bracket"></i>
+                    </div>
+                    <span class="text-[10px] font-medium text-gray-300 block">Levantar</span>
+                </button>
+                <button onclick="switchTab('tab-tasks')" class="glass-card p-3 rounded-xl hover:border-gold-500/40 transition">
+                    <div class="w-9 h-9 mx-auto rounded-full bg-amber-500/10 text-amber-400 flex items-center justify-center mb-1 text-sm">
+                        <i class="fas fa-tasks"></i>
+                    </div>
+                    <span class="text-[10px] font-medium text-gray-300 block">Tarefas</span>
+                </button>
+                <button onclick="openSupportWhatsApp()" class="glass-card p-3 rounded-xl hover:border-gold-500/40 transition">
+                    <div class="w-9 h-9 mx-auto rounded-full bg-emerald-600/10 text-emerald-500 flex items-center justify-center mb-1 text-sm">
+                        <i class="fab fa-whatsapp"></i>
+                    </div>
+                    <span class="text-[10px] font-medium text-gray-300 block">Suporte</span>
+                </button>
+            </div>
+
+            <!-- Banner Informativo -->
+            <div class="bg-gradient-to-r from-dark-700 to-dark-800 p-4 rounded-xl border border-gray-800 flex items-center justify-between">
+                <div>
+                    <h4 class="text-xs font-bold text-white">Comunidade MONEY AZ</h4>
+                    <p class="text-[10px] text-gray-400 mt-0.5">Sincronizado na nuvem em tempo real.</p>
+                </div>
+                <a id="support-link-btn" href="#" target="_blank" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold flex items-center space-x-1">
+                    <i class="fab fa-whatsapp"></i>
+                    <span>Grupo</span>
+                </a>
+            </div>
+
+            <!-- Resumo de Planos Ativos -->
+            <div>
+                <h3 class="text-xs font-bold uppercase text-gray-400 tracking-wider mb-2">Os Meus Investimentos Ativos</h3>
+                <div id="active-plans-list" class="space-y-2">
+                    <div class="glass-card p-4 rounded-xl text-center text-gray-500 text-xs">
+                        Nenhum pacote subscrito ainda.
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. SEPARADOR INVESTIR (15 PACOTES) -->
+        <section id="tab-invest" class="tab-page space-y-3 hidden">
+            <div class="flex items-center justify-between">
+                <h3 class="text-sm font-bold text-white uppercase tracking-wider">Os 15 Pacotes VIP</h3>
+                <span class="text-[10px] text-gold-500 font-semibold bg-gold-500/10 px-2 py-0.5 rounded-full">Rendimento Diário</span>
+            </div>
+            
+            <div id="packages-container" class="space-y-3">
+                <!-- Injetado Dinamicamente via JS -->
+            </div>
+        </section>
+
+        <!-- 3. SEPARADOR DEPÓSITO -->
+        <section id="tab-deposit" class="tab-page space-y-4 hidden">
+            <div class="glass-card p-5 rounded-2xl border border-gold-500/20">
+                <h3 class="text-base font-bold text-white mb-1">Carregar Saldo</h3>
+                <p class="text-xs text-gray-400 mb-4">Escolha a sua forma de pagamento e envie o comprovativo.</p>
+
+                <!-- Seleção de Método -->
+                <div class="grid grid-cols-3 gap-2 mb-4">
+                    <button type="button" onclick="selectPaymentMethod('paypay')" id="method-paypay" class="pay-method-btn bg-dark-800 border border-gold-500 p-2.5 rounded-xl text-center">
+                        <i class="fas fa-mobile-alt text-gold-500 mb-1 text-base block"></i>
+                        <span class="text-[10px] font-bold text-white block">PayPay</span>
+                    </button>
+                    <button type="button" onclick="selectPaymentMethod('express')" id="method-express" class="pay-method-btn bg-dark-800 border border-gray-700 p-2.5 rounded-xl text-center">
+                        <i class="fas fa-credit-card text-gray-400 mb-1 text-base block"></i>
+                        <span class="text-[10px] font-bold text-white block">Express</span>
+                    </button>
+                    <button type="button" onclick="selectPaymentMethod('ref')" id="method-ref" class="pay-method-btn bg-dark-800 border border-gray-700 p-2.5 rounded-xl text-center">
+                        <i class="fas fa-barcode text-gray-400 mb-1 text-base block"></i>
+                        <span class="text-[10px] font-bold text-white block">Referência</span>
+                    </button>
+                </div>
+
+                <!-- Detalhes de Pagamento -->
+                <div class="bg-dark-800 p-4 rounded-xl border border-gray-800 space-y-3 mb-4">
+                    <div class="flex justify-between items-center">
+                        <span class="text-xs text-gray-400" id="deposit-account-label">Número / IBAN de Destino:</span>
+                        <button onclick="copyDepositDetails()" class="text-[10px] font-bold text-gold-500 bg-gold-500/10 px-2 py-1 rounded">Copiar</button>
+                    </div>
+                    <p id="deposit-account-value" class="text-sm font-mono font-bold text-gold-400 break-all">Carregando dados...</p>
+                    <p id="deposit-instructions" class="text-[10px] text-gray-400">Faça a transferência para os dados acima e anexe a imagem/ficheiro do comprovativo.</p>
+                </div>
+
+                <!-- Formulário de Depósito -->
+                <form onsubmit="handleDepositSubmit(event)" class="space-y-3">
+                    <div>
+                        <label class="text-xs text-gray-400 mb-1 block">Valor Transferido (Kz)</label>
+                        <input type="number" id="deposit-amount" min="1000" required placeholder="Ex: 7500" class="w-full bg-dark-800 border border-gray-700 rounded-xl py-2.5 px-3 text-sm focus:border-gold-500 focus:outline-none text-white">
+                    </div>
+                    <div>
+                        <label class="text-xs text-gray-400 mb-1 block">Comprovativo de Pagamento (Nome do Ficheiro/Nota)</label>
+                        <input type="text" id="deposit-proof" required placeholder="Ex: Comprovativo_PayPay_923... ou Transação #12345" class="w-full bg-dark-800 border border-gray-700 rounded-xl py-2.5 px-3 text-sm focus:border-gold-500 focus:outline-none text-white">
+                    </div>
+                    <button type="submit" class="w-full py-3 rounded-xl gold-btn-gradient text-dark-900 font-extrabold text-sm shadow-lg shadow-gold-500/20">
+                        Submeter Depósito
+                    </button>
+                </form>
+            </div>
+
+            <!-- Histórico de Depósitos -->
+            <div>
+                <h3 class="text-xs font-bold uppercase text-gray-400 tracking-wider mb-2">Os Meus Depósitos</h3>
+                <div id="user-deposits-history" class="space-y-2">
+                    <!-- Histórico dinâmico -->
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. SEPARADOR TAREFAS (COM RECOMPENSAS EM KZ) -->
+        <section id="tab-tasks" class="tab-page space-y-3 hidden">
+            <div class="glass-card p-4 rounded-2xl border border-gold-500/20">
+                <h3 class="text-base font-bold text-white">Tarefas Diárias com Recompensa</h3>
+                <p class="text-xs text-gray-400">Complete as tarefas diárias e ganhe saldo extra imediatamente no seu perfil.</p>
+            </div>
+
+            <!-- Lista de Tarefas -->
+            <div class="space-y-3">
+                <!-- Tarefa 1: Check-in -->
+                <div class="glass-card p-4 rounded-xl flex items-center justify-between">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center text-lg">
+                            <i class="fas fa-calendar-check"></i>
+                        </div>
+                        <div>
+                            <h4 class="text-xs font-bold text-white">Check-in Diário</h4>
+                            <p class="text-[10px] text-gray-400">Recompensa: <span class="text-gold-500 font-bold">+500 Kz</span></p>
+                        </div>
+                    </div>
+                    <button id="task-checkin-btn" onclick="claimTask('checkin', 500)" class="gold-btn-gradient px-3 py-1.5 rounded-lg text-dark-900 font-bold text-xs">
+                        Reclamar
+                    </button>
+                </div>
+
+                <!-- Tarefa 2: Partilhar no WhatsApp -->
+                <div class="glass-card p-4 rounded-xl flex items-center justify-between">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-lg">
+                            <i class="fab fa-whatsapp"></i>
+                        </div>
+                        <div>
+                            <h4 class="text-xs font-bold text-white">Convidar Amigos</h4>
+                            <p class="text-[10px] text-gray-400">Recompensa: <span class="text-gold-500 font-bold">+1.000 Kz</span></p>
+                        </div>
+                    </div>
+                    <button id="task-share-btn" onclick="claimTask('share', 1000)" class="gold-btn-gradient px-3 py-1.5 rounded-lg text-dark-900 font-bold text-xs">
+                        Partilhar
+                    </button>
+                </div>
+
+                <!-- Tarefa 3: Anúncio -->
+                <div class="glass-card p-4 rounded-xl flex items-center justify-between">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 rounded-full bg-purple-500/20 text-purple-400 flex items-center justify-center text-lg">
+                            <i class="fas fa-play-circle"></i>
+                        </div>
+                        <div>
+                            <h4 class="text-xs font-bold text-white">Assistir Vídeo Promocional</h4>
+                            <p class="text-[10px] text-gray-400">Recompensa: <span class="text-gold-500 font-bold">+750 Kz</span></p>
+                        </div>
+                    </div>
+                    <button id="task-ad-btn" onclick="watchAdTask()" class="gold-btn-gradient px-3 py-1.5 rounded-lg text-dark-900 font-bold text-xs">
+                        Assistir (10s)
+                    </button>
+                </div>
+
+                <!-- Tarefa 4: Telegram/WhatsApp Grupo -->
+                <div class="glass-card p-4 rounded-xl flex items-center justify-between">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center text-lg">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div>
+                            <h4 class="text-xs font-bold text-white">Aderir ao Grupo Oficial</h4>
+                            <p class="text-[10px] text-gray-400">Recompensa: <span class="text-gold-500 font-bold">+1.500 Kz</span></p>
+                        </div>
+                    </div>
+                    <button id="task-group-btn" onclick="claimTask('group', 1500)" class="gold-btn-gradient px-3 py-1.5 rounded-lg text-dark-900 font-bold text-xs">
+                        Aderir
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. SEPARADOR PERFIL & DEFINIÇÕES DA CONTA -->
+        <section id="tab-profile" class="tab-page space-y-4 hidden">
+            <!-- Informações do Utilizador -->
+            <div class="glass-card p-5 rounded-2xl border border-gold-500/20 flex items-center space-x-4">
+                <div class="w-14 h-14 rounded-full gold-bg-gradient flex items-center justify-center font-black text-dark-900 text-2xl">
+                    <i class="fas fa-user-tie"></i>
+                </div>
+                <div>
+                    <h3 id="user-profile-name" class="font-bold text-white text-base">Utilizador</h3>
+                    <p id="user-profile-phone" class="text-xs text-gray-400">+244 --- --- ---</p>
+                    <span class="inline-block mt-1 bg-gold-500/10 text-gold-500 text-[10px] font-bold px-2 py-0.5 rounded-full">Conta Ativa na Nuvem</span>
+                </div>
+            </div>
+
+            <!-- Botões Rápidos -->
+            <div class="space-y-2">
+                <button onclick="openWithdrawModal()" class="w-full glass-card p-3.5 rounded-xl flex items-center justify-between hover:border-gold-500/30">
+                    <div class="flex items-center space-x-3">
+                        <i class="fas fa-arrow-up-from-bracket text-emerald-400"></i>
+                        <span class="text-xs font-medium text-white">Solicitar Levantamento</span>
+                    </div>
+                    <i class="fas fa-chevron-right text-xs text-gray-500"></i>
+                </button>
+
+                <!-- Botão do Painel ADM -->
+                <button onclick="promptAdminPin()" class="w-full glass-card p-3.5 rounded-xl flex items-center justify-between border-amber-500/30 hover:border-amber-500">
+                    <div class="flex items-center space-x-3">
+                        <i class="fas fa-user-shield text-amber-400"></i>
+                        <span class="text-xs font-bold text-amber-400">Painel de Administrador</span>
+                    </div>
+                    <i class="fas fa-lock text-xs text-amber-400"></i>
+                </button>
+
+                <button onclick="handleLogout()" class="w-full bg-red-500/10 border border-red-500/20 p-3.5 rounded-xl flex items-center justify-between text-red-400 hover:bg-red-500/20">
+                    <div class="flex items-center space-x-3">
+                        <i class="fas fa-sign-out-alt"></i>
+                        <span class="text-xs font-bold">Encerrar Sessão</span>
+                    </div>
+                </button>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- NAVEGAÇÃO INFERIOR FIXA (BARRA DE SEPARADORES) -->
+    <nav class="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-dark-800/95 backdrop-blur-md border-t border-gray-800 z-40 py-2 px-3">
+        <div class="flex justify-around items-center">
+            <button onclick="switchTab('tab-home')" id="nav-tab-home" class="nav-btn flex flex-col items-center text-gold-500">
+                <i class="fas fa-home text-lg"></i>
+                <span class="text-[10px] font-medium mt-0.5">Início</span>
+            </button>
+            <button onclick="switchTab('tab-invest')" id="nav-tab-invest" class="nav-btn flex flex-col items-center text-gray-500 hover:text-gold-500">
+                <i class="fas fa-chart-line text-lg"></i>
+                <span class="text-[10px] font-medium mt-0.5">Investir</span>
+            </button>
+            <button onclick="switchTab('tab-deposit')" id="nav-tab-deposit" class="nav-btn flex flex-col items-center text-gray-500 hover:text-gold-500">
+                <i class="fas fa-wallet text-lg"></i>
+                <span class="text-[10px] font-medium mt-0.5">Depósito</span>
+            </button>
+            <button onclick="switchTab('tab-tasks')" id="nav-tab-tasks" class="nav-btn flex flex-col items-center text-gray-500 hover:text-gold-500">
+                <i class="fas fa-tasks text-lg"></i>
+                <span class="text-[10px] font-medium mt-0.5">Tarefas</span>
+            </button>
+            <button onclick="switchTab('tab-profile')" id="nav-tab-profile" class="nav-btn flex flex-col items-center text-gray-500 hover:text-gold-500">
+                <i class="fas fa-user text-lg"></i>
+                <span class="text-[10px] font-medium mt-0.5">Perfil</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- MODAL DE SOLICITAÇÃO DE LEVANTAMENTO -->
+    <div id="withdraw-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="glass-card w-full max-w-sm p-5 rounded-2xl border border-gold-500/30 space-y-4">
+            <div class="flex justify-between items-center">
+                <h3 class="text-base font-bold text-white">Pedir Levantamento</h3>
+                <button onclick="closeWithdrawModal()" class="text-gray-400 hover:text-white"><i class="fas fa-times"></i></button>
+            </div>
+            <form onsubmit="handleWithdrawSubmit(event)" class="space-y-3">
+                <div>
+                    <label class="text-xs text-gray-400 mb-1 block">Valor a Levantado (Kz)</label>
+                    <input type="number" id="withdraw-amount" min="1000" required placeholder="Mínimo 1.000 Kz" class="w-full bg-dark-800 border border-gray-700 rounded-xl py-2.5 px-3 text-sm focus:border-gold-500 focus:outline-none text-white">
+                </div>
+                <div>
+                    <label class="text-xs text-gray-400 mb-1 block">Número de Telefone / IBAN para Receber</label>
+                    <input type="text" id="withdraw-target" required placeholder="Ex: 923XXXXXX ou AO06..." class="w-full bg-dark-800 border border-gray-700 rounded-xl py-2.5 px-3 text-sm focus:border-gold-500 focus:outline-none text-white">
+                </div>
+                <button type="submit" class="w-full py-3 rounded-xl gold-btn-gradient text-dark-900 font-extrabold text-sm shadow-lg shadow-gold-500/20">
+                    Confirmar Pedido de Levantamento
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL DO PAINEL ADMINISTRATIVO (ADM GLOBAL EM TEMPO REAL) -->
+    <div id="admin-modal" class="fixed inset-0 bg-dark-900/95 z-50 overflow-y-auto p-4 hidden">
+        <div class="max-w-md mx-auto space-y-4 pb-12">
+            <div class="flex justify-between items-center border-b border-gray-800 pb-3">
+                <div class="flex items-center space-x-2">
+                    <span class="w-3 h-3 rounded-full bg-amber-500"></span>
+                    <h2 class="text-base font-black text-amber-400 uppercase tracking-wider">Painel ADM Global (Nuvem)</h2>
+                </div>
+                <button onclick="closeAdminModal()" class="text-gray-400 hover:text-white"><i class="fas fa-times text-lg"></i></button>
+            </div>
+
+            <!-- Navegação da Aba do ADM -->
+            <div class="flex bg-dark-800 p-1 rounded-xl border border-gray-800">
+                <button onclick="switchAdminTab('users')" id="adm-tab-users-btn" class="flex-1 py-2 text-[11px] font-bold rounded-lg bg-amber-500 text-dark-900">Utilizadores</button>
+                <button onclick="switchAdminTab('approvals')" id="adm-tab-approvals-btn" class="flex-1 py-2 text-[11px] font-bold rounded-lg text-gray-400">Aprovações</button>
+                <button onclick="switchAdminTab('settings')" id="adm-tab-settings-btn" class="flex-1 py-2 text-[11px] font-bold rounded-lg text-gray-400">Definições</button>
+            </div>
+
+            <!-- ADM ABA 1: UTILIZADORES REGISTADOS EM QUALQUER DISPOSITIVO -->
+            <div id="adm-tab-users" class="space-y-3">
+                <h3 class="text-xs font-bold text-gray-400 uppercase">Contas Criadas em Todos os Telefones</h3>
+                <div id="adm-users-list" class="space-y-2">
+                    <p class="text-center text-xs text-gray-500 py-4">A carregar dados do Firebase...</p>
+                </div>
+            </div>
+
+            <!-- ADM ABA 2: APROVAÇÕES DE DEPÓSITOS E LEVANTAMENTOS -->
+            <div id="adm-tab-approvals" class="space-y-3 hidden">
+                <h3 class="text-xs font-bold text-gray-400 uppercase">Aprovações Globais em Tempo Real</h3>
+                <div id="adm-approvals-list" class="space-y-2">
+                    <p class="text-center text-xs text-gray-500 py-4">A carregar transações...</p>
+                </div>
+            </div>
+
+            <!-- ADM ABA 3: DEFINIÇÕES DE CONTAS E WHATSAPP -->
+            <div id="adm-tab-settings" class="space-y-3 hidden">
+                <h3 class="text-xs font-bold text-gray-400 uppercase">Configurações de Pagamento & Suporte</h3>
+                <form onsubmit="handleSavePlatformSettings(event)" class="glass-card p-4 rounded-xl space-y-3">
+                    <div>
+                        <label class="text-xs text-gray-400 block mb-1">Número PayPay de Receção</label>
+                        <input type="text" id="adm-paypay-num" class="w-full bg-dark-800 border border-gray-700 rounded-lg py-2 px-3 text-xs text-white">
+                    </div>
+                    <div>
+                        <label class="text-xs text-gray-400 block mb-1">IBAN Express / IBAN de Receção</label>
+                        <input type="text" id="adm-express-iban" class="w-full bg-dark-800 border border-gray-700 rounded-lg py-2 px-3 text-xs text-white">
+                    </div>
+                    <div>
+                        <label class="text-xs text-gray-400 block mb-1">Referência Bancária de Receção</label>
+                        <input type="text" id="adm-ref-code" class="w-full bg-dark-800 border border-gray-700 rounded-lg py-2 px-3 text-xs text-white">
+                    </div>
+                    <div>
+                        <label class="text-xs text-gray-400 block mb-1">Link do Grupo / Suporte WhatsApp</label>
+                        <input type="text" id="adm-whatsapp-link" class="w-full bg-dark-800 border border-gray-700 rounded-lg py-2 px-3 text-xs text-white">
+                    </div>
+                    <button type="submit" class="w-full py-2.5 rounded-lg gold-btn-gradient text-dark-900 font-bold text-xs">
+                        Guardar Alterações Globais
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- INICIALIZAÇÃO E INTEGRAÇÃO FIREBASE FIRESTORE EM TEMPO REAL -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { 
+            getAuth, 
+            signInAnonymously, 
+            signInWithCustomToken, 
+            onAuthStateChanged 
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { 
+            getFirestore, 
+            doc, 
+            getDoc, 
+            setDoc, 
+            updateDoc, 
+            onSnapshot, 
+            collection, 
+            addDoc 
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Configuração Padrão Segura do Firebase
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'money-az-angola-v1';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' 
+            ? JSON.parse(__firebase_config) 
+            : {
+                apiKey: "AIzaSyDemoKeyForMoneyAZPlatformKey123",
+                authDomain: "money-az-app.firebaseapp.com",
+                projectId: "money-az-app",
+                storageBucket: "money-az-app.appspot.com",
+                messagingSenderId: "1234567890",
+                appId: "1:1234567890:web:demo123456"
+            };
+
+        // Inicializar Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // Estado Global da Aplicação
+        window.appState = {
+            currentUser: null,
+            selectedPaymentMethod: 'paypay',
+            platformSettings: {
+                paypay: '923000111',
+                express: 'AO06 0055 0000 1234 5678 1012 3',
+                ref: 'Entidade 00123 / Ref 987 654 321',
+                whatsapp: 'https://chat.whatsapp.com/demo'
+            },
+            unsubscribers: []
+        };
+
+        // Autenticação Silenciosa Inicial
+        async function initAuth() {
+            try {
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+            } catch (err) {
+                console.warn("Autenticação anónima inicializada em modo de contingência.", err);
+            }
+        }
+
+        // Listener de Autenticação do Firebase
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                console.log("Sessão Firebase ligada na nuvem:", user.uid);
+                listenToPlatformSettings();
+                checkSavedSession();
+            }
+        });
+
+        // Ouvir Definições Globais do Sistema em Tempo Real
+        function listenToPlatformSettings() {
+            const settingsDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'config', 'settings');
+            onSnapshot(settingsDocRef, (snap) => {
+                if (snap.exists()) {
+                    window.appState.platformSettings = { ...window.appState.platformSettings, ...snap.data() };
+                } else {
+                    // Inicializar no Firestore se não existir
+                    setDoc(settingsDocRef, window.appState.platformSettings, { merge: true });
+                }
+                updatePaymentUIDisplay();
+            }, (error) => {
+                console.log("Definições padrão locais mantidas:", error);
+            });
+        }
+
+        // 15 PACOTES DE INVESTIMENTO EXATOS
+        const INVESTMENT_PACKAGES = [
+            { id: 1, name: "Pacote Base 1.1", price: 7500, daily: 750, days: 30 },
+            { id: 2, name: "Pacote Base 1.2", price: 15000, daily: 1550, days: 30 },
+            { id: 3, name: "Pacote Base 1.3", price: 25000, daily: 2600, days: 30 },
+            { id: 4, name: "Pacote Base", price: 40000, daily: 4200, days: 30 },
+            { id: 5, name: "Pacote Mini 1.1", price: 60000, daily: 6400, days: 30 },
+            { id: 6, name: "Pacote Mini 1.2", price: 80000, daily: 8600, days: 30 },
+            { id: 7, name: "Pacote Mini 1.3", price: 100000, daily: 10800, days: 30 },
+            { id: 8, name: "Pacote Mini", price: 120000, daily: 13000, days: 30 },
+            { id: 9, name: "Pacote Promo", price: 140000, daily: 15400, days: 30 },
+            { id: 10, name: "Pacote Promo Plus", price: 160000, daily: 17800, days: 30 },
+            { id: 11, name: "Pacote Max AZ", price: 190000, daily: 21200, days: 30 },
+            { id: 12, name: "Pacote Pro AZ", price: 220000, daily: 24800, days: 30 },
+            { id: 13, name: "Pacote Premium AZ", price: 250000, daily: 28500, days: 30 },
+            { id: 14, name: "Pacote MEGA AZ", price: 280000, daily: 32200, days: 30 },
+            { id: 15, name: "Pacote ULTRA AZ", price: 290000, daily: 33500, days: 30 }
+        ];
+
+        // Renderizar Lista dos 15 Pacotes
+        function renderPackages() {
+            const container = document.getElementById('packages-container');
+            if (!container) return;
+
+            container.innerHTML = INVESTMENT_PACKAGES.map(pkg => `
+                <div class="glass-card p-4 rounded-xl flex items-center justify-between border border-gray-800 hover:border-gold-500/30 transition">
+                    <div>
+                        <span class="text-[10px] font-extrabold uppercase text-gold-500 tracking-wider">VIP ${pkg.id}</span>
+                        <h4 class="text-sm font-bold text-white">${pkg.name}</h4>
+                        <p class="text-xs text-gray-400 mt-0.5">Preço: <span class="text-white font-bold">${pkg.price.toLocaleString('pt-AO')} Kz</span></p>
+                        <p class="text-[11px] text-emerald-400 font-semibold mt-0.5">
+                            Rendimento: <span class="font-bold">+${pkg.daily.toLocaleString('pt-AO')} Kz/dia</span> (${pkg.days} dias)
+                        </p>
+                    </div>
+                    <button onclick="subscribePackage(${pkg.id})" class="gold-btn-gradient px-3 py-2 rounded-xl text-dark-900 font-extrabold text-xs shadow-md shadow-gold-500/10">
+                        Subscrever
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        // SISTEMA DE NAVEGAÇÃO E TABS
+        window.switchTab = function(tabId) {
+            document.querySelectorAll('.tab-page').forEach(page => page.classList.add('hidden'));
+            const selected = document.getElementById(tabId);
+            if (selected) selected.classList.remove('hidden');
+
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('text-gold-500');
+                btn.classList.add('text-gray-500');
+            });
+            const activeNavBtn = document.getElementById(`nav-${tabId}`);
+            if (activeNavBtn) {
+                activeNavBtn.classList.remove('text-gray-500');
+                activeNavBtn.classList.add('text-gold-500');
+            }
+        };
+
+        window.switchAuthTab = function(type) {
+            const loginForm = document.getElementById('login-form');
+            const regForm = document.getElementById('register-form');
+            const loginBtn = document.getElementById('tab-login-btn');
+            const regBtn = document.getElementById('tab-register-btn');
+
+            if (type === 'login') {
+                loginForm.classList.remove('hidden');
+                regForm.classList.add('hidden');
+                loginBtn.className = "flex-1 py-2 text-xs font-bold rounded-lg bg-gold-500 text-dark-900 transition";
+                regBtn.className = "flex-1 py-2 text-xs font-bold rounded-lg text-gray-400 transition";
+            } else {
+                loginForm.classList.add('hidden');
+                regForm.classList.remove('hidden');
+                loginBtn.className = "flex-1 py-2 text-xs font-bold rounded-lg text-gray-400 transition";
+                regBtn.className = "flex-1 py-2 text-xs font-bold rounded-lg bg-gold-500 text-dark-900 transition";
+            }
+        };
+
+        // GESTÃO DE UTILIZADORES EM TEMPO REAL NO FIRESTORE
+        window.handleRegister = async function(e) {
+            e.preventDefault();
+            const name = document.getElementById('reg-name').value.trim();
+            const phone = document.getElementById('reg-phone').value.trim();
+            const password = document.getElementById('reg-pass').value.trim();
+
+            if (!phone || !password || !name) return;
+
+            const userDocId = `user_${phone}`;
+            const userDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'users', userDocId);
+
+            try {
+                const docSnap = await getDoc(userDocRef);
+                if (docSnap.exists()) {
+                    showToast("Este número de telefone já está registado!", "exclamation-triangle");
+                    return;
+                }
+
+                const newUser = {
+                    phone,
+                    name,
+                    password,
+                    balance: 0,
+                    activePlans: [],
+                    completedTasks: [],
+                    createdAt: new Date().toISOString()
+                };
+
+                await setDoc(userDocRef, newUser);
+                saveLocalUserSession(userDocId);
+                showToast("Conta criada com sucesso!", "check-circle");
+                loadUserDataAndListen(userDocId);
+            } catch (err) {
+                showToast("Erro ao registar utilizador na nuvem.", "exclamation-circle");
+                console.error(err);
+            }
+        };
+
+        window.handleLogin = async function(e) {
+            e.preventDefault();
+            const phone = document.getElementById('login-phone').value.trim();
+            const password = document.getElementById('login-pass').value.trim();
+
+            const userDocId = `user_${phone}`;
+            const userDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'users', userDocId);
+
+            try {
+                const docSnap = await getDoc(userDocRef);
+                if (!docSnap.exists()) {
+                    showToast("Conta não encontrada. Verifique o número.", "exclamation-circle");
+                    return;
+                }
+
+                const userData = docSnap.data();
+                if (userData.password !== password) {
+                    showToast("Palavra-passe incorreta!", "lock");
+                    return;
+                }
+
+                saveLocalUserSession(userDocId);
+                showToast("Sessão iniciada com sucesso!", "check-circle");
+                loadUserDataAndListen(userDocId);
+            } catch (err) {
+                showToast("Erro ao autenticar.", "exclamation-circle");
+                console.error(err);
+            }
+        };
+
+        function saveLocalUserSession(userDocId) {
+            sessionStorage.setItem('money_az_user_id', userDocId);
+        }
+
+        function checkSavedSession() {
+            const savedUserId = sessionStorage.getItem('money_az_user_id');
+            if (savedUserId) {
+                loadUserDataAndListen(savedUserId);
+            } else {
+                document.getElementById('auth-screen').classList.remove('hidden');
+                document.getElementById('app-content').classList.add('hidden');
+            }
+        }
+
+        // Escuta em Tempo Real do Estado do Utilizador Ativo
+        function loadUserDataAndListen(userDocId) {
+            document.getElementById('auth-screen').classList.add('hidden');
+            document.getElementById('app-content').classList.remove('hidden');
+
+            const userDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'users', userDocId);
+            
+            // Limpar escutas anteriores
+            window.appState.unsubscribers.forEach(unsub => unsub());
+            window.appState.unsubscribers = [];
+
+            const unsub = onSnapshot(userDocRef, (snap) => {
+                if (snap.exists()) {
+                    const userData = snap.data();
+                    userData.id = snap.id;
+                    window.appState.currentUser = userData;
+
+                    // Atualizar UI do Perfil e Painel
+                    document.getElementById('user-balance').innerHTML = `${(userData.balance || 0).toLocaleString('pt-AO')} <span class="text-gold-500 text-lg">Kz</span>`;
+                    document.getElementById('user-profile-name').innerText = userData.name || "Utilizador";
+                    document.getElementById('user-profile-phone').innerText = `+244 ${userData.phone}`;
+
+                    // Calcular Rendimentos Diários dos Planos
+                    const activePlans = userData.activePlans || [];
+                    document.getElementById('active-packages-count').innerText = `${activePlans.length} Pl`;
+                    
+                    let dailySum = 0;
+                    activePlans.forEach(p => dailySum += (p.daily || 0));
+                    document.getElementById('daily-income').innerText = `+${dailySum.toLocaleString('pt-AO')} Kz`;
+
+                    renderActivePlansList(activePlans);
+                    renderUserDepositsHistory(userDocId);
+                }
+            }, (err) => {
+                console.error("Erro na escuta do utilizador:", err);
+            });
+
+            window.appState.unsubscribers.push(unsub);
+        }
+
+        function renderActivePlansList(plans) {
+            const container = document.getElementById('active-plans-list');
+            if (!container) return;
+
+            if (!plans || plans.length === 0) {
+                container.innerHTML = `
+                    <div class="glass-card p-4 rounded-xl text-center text-gray-500 text-xs">
+                        Nenhum pacote subscrito ainda.
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = plans.map((p, idx) => `
+                <div class="glass-card p-3 rounded-xl border border-gray-800 flex justify-between items-center">
+                    <div>
+                        <h4 class="text-xs font-bold text-white">${p.name}</h4>
+                        <p class="text-[10px] text-gray-400">Ativado em: ${new Date(p.activatedAt).toLocaleDateString('pt-AO')}</p>
+                    </div>
+                    <span class="text-xs font-bold text-emerald-400">+${p.daily.toLocaleString('pt-AO')} Kz/dia</span>
+                </div>
+            `).join('');
+        }
+
+        window.handleLogout = function() {
+            sessionStorage.removeItem('money_az_user_id');
+            window.appState.currentUser = null;
+            document.getElementById('auth-screen').classList.remove('hidden');
+            document.getElementById('app-content').classList.add('hidden');
+            showToast("Sessão encerrada com sucesso.", "info-circle");
+        };
+
+        // SUBSCRIÇÃO DE PACOTES
+        window.subscribePackage = async function(pkgId) {
+            const user = window.appState.currentUser;
+            if (!user) {
+                showToast("Por favor, inicie sessão para subscrever um pacote.", "exclamation-triangle");
+                return;
+            }
+
+            const pkg = INVESTMENT_PACKAGES.find(p => p.id === pkgId);
+            if (!pkg) return;
+
+            if ((user.balance || 0) < pkg.price) {
+                showToast(`Saldo insuficiente (${user.balance || 0} Kz). Recarregue a sua conta!`, "wallet");
+                switchTab('tab-deposit');
+                return;
+            }
+
+            try {
+                const userDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'users', user.id);
+                const updatedBalance = user.balance - pkg.price;
+                const newPlan = {
+                    id: pkg.id,
+                    name: pkg.name,
+                    price: pkg.price,
+                    daily: pkg.daily,
+                    days: pkg.days,
+                    activatedAt: new Date().toISOString()
+                };
+
+                await updateDoc(userDocRef, {
+                    balance: updatedBalance,
+                    activePlans: [...(user.activePlans || []), newPlan]
+                });
+
+                showToast(`Pacote ${pkg.name} ativado com sucesso!`, "check-circle");
+            } catch (err) {
+                showToast("Erro ao processar subscrição.", "exclamation-circle");
+                console.error(err);
+            }
+        };
+
+        // MÉTODOS DE DEPÓSITO E COMPROVATIVO
+        window.selectPaymentMethod = function(method) {
+            window.appState.selectedPaymentMethod = method;
+            document.querySelectorAll('.pay-method-btn').forEach(btn => {
+                btn.classList.remove('border-gold-500');
+                btn.classList.add('border-gray-700');
+            });
+
+            const activeBtn = document.getElementById(`method-${method}`);
+            if (activeBtn) {
+                activeBtn.classList.remove('border-gray-700');
+                activeBtn.classList.add('border-gold-500');
+            }
+
+            updatePaymentUIDisplay();
+        };
+
+        function updatePaymentUIDisplay() {
+            const method = window.appState.selectedPaymentMethod;
+            const settings = window.appState.platformSettings;
+
+            const labelEl = document.getElementById('deposit-account-label');
+            const valEl = document.getElementById('deposit-account-value');
+            const linkBtn = document.getElementById('support-link-btn');
+
+            if (linkBtn && settings.whatsapp) {
+                linkBtn.href = settings.whatsapp;
+            }
+
+            if (method === 'paypay') {
+                labelEl.innerText = "Número PayPay de Receção:";
+                valEl.innerText = settings.paypay || '923000111';
+            } else if (method === 'express') {
+                labelEl.innerText = "IBAN Express de Receção:";
+                valEl.innerText = settings.express || 'AO06 0055 0000 1234 5678 1012 3';
+            } else {
+                labelEl.innerText = "Referência Bancária de Receção:";
+                valEl.innerText = settings.ref || 'Entidade 00123 / Ref 987 654 321';
+            }
+        }
+
+        window.copyDepositDetails = function() {
+            const val = document.getElementById('deposit-account-value').innerText;
+            navigator.clipboard.writeText(val);
+            showToast("Dados de pagamento copiados!", "copy");
+        };
+
+        window.handleDepositSubmit = async function(e) {
+            e.preventDefault();
+            const user = window.appState.currentUser;
+            if (!user) return;
+
+            const amount = parseFloat(document.getElementById('deposit-amount').value);
+            const proof = document.getElementById('deposit-proof').value.trim();
+
+            if (!amount || amount < 1000) {
+                showToast("O depósito mínimo é de 1.000 Kz", "exclamation-triangle");
+                return;
+            }
+
+            try {
+                const txCollection = collection(db, 'artifacts', appId, 'public', 'data', 'transactions');
+                await addDoc(txCollection, {
+                    userId: user.id,
+                    userPhone: user.phone,
+                    userName: user.name,
+                    type: 'deposit',
+                    amount: amount,
+                    proof: proof,
+                    method: window.appState.selectedPaymentMethod,
+                    status: 'pending',
+                    createdAt: new Date().toISOString()
+                });
+
+                document.getElementById('deposit-amount').value = '';
+                document.getElementById('deposit-proof').value = '';
+
+                showToast("Depósito submetido! A aguardar aprovação do ADM.", "clock");
+            } catch (err) {
+                showToast("Erro ao registar depósito.", "exclamation-circle");
+                console.error(err);
+            }
+        };
+
+        // HISTÓRICO DE DEPÓSITOS EM TEMPO REAL
+        function renderUserDepositsHistory(userDocId) {
+            const container = document.getElementById('user-deposits-history');
+            if (!container) return;
+
+            const txRef = collection(db, 'artifacts', appId, 'public', 'data', 'transactions');
+            onSnapshot(txRef, (snap) => {
+                const userTxs = [];
+                snap.forEach(docSnap => {
+                    const data = docSnap.data();
+                    if (data.userId === userDocId && data.type === 'deposit') {
+                        userTxs.push({ id: docSnap.id, ...data });
+                    }
+                });
+
+                if (userTxs.length === 0) {
+                    container.innerHTML = `<div class="glass-card p-3 rounded-xl text-center text-gray-500 text-xs">Sem depósitos registados.</div>`;
+                    return;
+                }
+
+                userTxs.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+                container.innerHTML = userTxs.map(tx => {
+                    let badgeClass = "bg-amber-500/10 text-amber-400";
+                    let statusLabel = "Pendente";
+                    if (tx.status === 'approved') {
+                        badgeClass = "bg-emerald-500/10 text-emerald-400";
+                        statusLabel = "Aprovado";
+                    } else if (tx.status === 'rejected') {
+                        badgeClass = "bg-red-500/10 text-red-400";
+                        statusLabel = "Rejeitado";
+                    }
+
+                    return `
+                        <div class="glass-card p-3 rounded-xl flex justify-between items-center border border-gray-800">
+                            <div>
+                                <p class="text-xs font-bold text-white">+${tx.amount.toLocaleString('pt-AO')} Kz</p>
+                                <p class="text-[10px] text-gray-400">${new Date(tx.createdAt).toLocaleDateString('pt-AO')}</p>
+                            </div>
+                            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${badgeClass}">
+                                ${statusLabel}
+                            </span>
+                        </div>
+                    `;
+                }).join('');
+            });
+        }
+
+        // TAREFAS DIÁRIAS
+        window.claimTask = async function(taskId, reward) {
+            const user = window.appState.currentUser;
+            if (!user) return;
+
+            const completed = user.completedTasks || [];
+            if (completed.includes(taskId)) {
+                showToast("Já reivindicou a recompensa desta tarefa hoje!", "info-circle");
+                return;
+            }
+
+            try {
+                const userDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'users', user.id);
+                await updateDoc(userDocRef, {
+                    balance: (user.balance || 0) + reward,
+                    completedTasks: [...completed, taskId]
+                });
+
+                showToast(`Parabéns! Recompensa de +${reward.toLocaleString('pt-AO')} Kz creditada.`, "gift");
+            } catch (err) {
+                showToast("Erro ao processar recompensa.", "exclamation-circle");
+            }
+        };
+
+        window.watchAdTask = function() {
+            const btn = document.getElementById('task-ad-btn');
+            if (!btn) return;
+
+            let seconds = 10;
+            btn.disabled = true;
+            btn.innerText = `A assistir (${seconds}s)...`;
+
+            const timer = setInterval(() => {
+                seconds--;
+                if (seconds > 0) {
+                    btn.innerText = `A assistir (${seconds}s)...`;
+                } else {
+                    clearInterval(timer);
+                    btn.innerText = "Concluído";
+                    claimTask('ad', 750);
+                }
+            }, 1000);
+        };
+
+        // LEVANTAMENTOS
+        window.openWithdrawModal = function() {
+            document.getElementById('withdraw-modal').classList.remove('hidden');
+        };
+
+        window.closeWithdrawModal = function() {
+            document.getElementById('withdraw-modal').classList.add('hidden');
+        };
+
+        window.handleWithdrawSubmit = async function(e) {
+            e.preventDefault();
+            const user = window.appState.currentUser;
+            if (!user) return;
+
+            const amount = parseFloat(document.getElementById('withdraw-amount').value);
+            const target = document.getElementById('withdraw-target').value.trim();
+
+            if (!amount || amount < 1000) {
+                showToast("O valor mínimo para levantamento é 1.000 Kz", "exclamation-triangle");
+                return;
+            }
+
+            if (user.balance < amount) {
+                showToast("Saldo insuficiente para efetuar o levantamento.", "wallet");
+                return;
+            }
+
+            try {
+                const txCollection = collection(db, 'artifacts', appId, 'public', 'data', 'transactions');
+                await addDoc(txCollection, {
+                    userId: user.id,
+                    userPhone: user.phone,
+                    userName: user.name,
+                    type: 'withdraw',
+                    amount: amount,
+                    target: target,
+                    status: 'pending',
+                    createdAt: new Date().toISOString()
+                });
+
+                // Deduzir temporariamente o valor do utilizador
+                const userDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'users', user.id);
+                await updateDoc(userDocRef, {
+                    balance: user.balance - amount
+                });
+
+                closeWithdrawModal();
+                showToast("Pedido de levantamento enviado ao Administrador!", "clock");
+            } catch (err) {
+                showToast("Erro ao processar pedido de levantamento.", "exclamation-circle");
+            }
+        };
+
+        // PAINEL DE ADMINISTRADOR GLOBAL (PIN OCULTO NA UI)
+        window.promptAdminPin = function() {
+            const pin = prompt("Introduza o PIN de Administrador:");
+            // PIN ADM FIXO 334476 OCULTO
+            if (pin === "334476") {
+                openAdminModal();
+            } else if (pin) {
+                showToast("PIN de Administrador Incorreto!", "lock");
+            }
+        };
+
+        function openAdminModal() {
+            document.getElementById('admin-modal').classList.remove('hidden');
+            loadAdminUsersList();
+            loadAdminApprovalsList();
+            
+            // Preencher definições do admin
+            document.getElementById('adm-paypay-num').value = window.appState.platformSettings.paypay || '';
+            document.getElementById('adm-express-iban').value = window.appState.platformSettings.express || '';
+            document.getElementById('adm-ref-code').value = window.appState.platformSettings.ref || '';
+            document.getElementById('adm-whatsapp-link').value = window.appState.platformSettings.whatsapp || '';
+        }
+
+        window.closeAdminModal = function() {
+            document.getElementById('admin-modal').classList.add('hidden');
+        };
+
+        window.switchAdminTab = function(tab) {
+            document.getElementById('adm-tab-users').classList.add('hidden');
+            document.getElementById('adm-tab-approvals').classList.add('hidden');
+            document.getElementById('adm-tab-settings').classList.add('hidden');
+
+            document.getElementById('adm-tab-users-btn').className = "flex-1 py-2 text-[11px] font-bold rounded-lg text-gray-400";
+            document.getElementById('adm-tab-approvals-btn').className = "flex-1 py-2 text-[11px] font-bold rounded-lg text-gray-400";
+            document.getElementById('adm-tab-settings-btn').className = "flex-1 py-2 text-[11px] font-bold rounded-lg text-gray-400";
+
+            if (tab === 'users') {
+                document.getElementById('adm-tab-users').classList.remove('hidden');
+                document.getElementById('adm-tab-users-btn').className = "flex-1 py-2 text-[11px] font-bold rounded-lg bg-amber-500 text-dark-900";
+            } else if (tab === 'approvals') {
+                document.getElementById('adm-tab-approvals').classList.remove('hidden');
+                document.getElementById('adm-tab-approvals-btn').className = "flex-1 py-2 text-[11px] font-bold rounded-lg bg-amber-500 text-dark-900";
+            } else {
+                document.getElementById('adm-tab-settings').classList.remove('hidden');
+                document.getElementById('adm-tab-settings-btn').className = "flex-1 py-2 text-[11px] font-bold rounded-lg bg-amber-500 text-dark-900";
+            }
+        };
+
+        // ABA 1 ADM: UTILIZADORES REGISTADOS NA NUVEM
+        function loadAdminUsersList() {
+            const container = document.getElementById('adm-users-list');
+            const usersRef = collection(db, 'artifacts', appId, 'public', 'data', 'users');
+
+            onSnapshot(usersRef, (snap) => {
+                const users = [];
+                snap.forEach(docSnap => {
+                    users.push({ id: docSnap.id, ...docSnap.data() });
+                });
+
+                if (users.length === 0) {
+                    container.innerHTML = `<p class="text-center text-xs text-gray-500 py-4">Nenhuma conta registada ainda.</p>`;
+                    return;
+                }
+
+                container.innerHTML = users.map(u => `
+                    <div class="glass-card p-3 rounded-xl border border-gray-800 space-y-1">
+                        <div class="flex justify-between items-center">
+                            <h4 class="text-xs font-bold text-white">${u.name || 'Sem nome'}</h4>
+                            <span class="text-xs font-bold text-gold-500">${(u.balance || 0).toLocaleString('pt-AO')} Kz</span>
+                        </div>
+                        <p class="text-[10px] text-gray-400">Tel: +244 ${u.phone} | Planos Ativos: ${(u.activePlans || []).length}</p>
+                        <p class="text-[9px] text-gray-500">ID Nuvem: ${u.id}</p>
+                    </div>
+                `).join('');
+            });
+        }
+
+        // ABA 2 ADM: APROVAÇÕES GLOBAIS
+        function loadAdminApprovalsList() {
+            const container = document.getElementById('adm-approvals-list');
+            const txRef = collection(db, 'artifacts', appId, 'public', 'data', 'transactions');
+
+            onSnapshot(txRef, (snap) => {
+                const txs = [];
+                snap.forEach(docSnap => {
+                    txs.push({ id: docSnap.id, ...docSnap.data() });
+                });
+
+                if (txs.length === 0) {
+                    container.innerHTML = `<p class="text-center text-xs text-gray-500 py-4">Sem solicitações pendentes.</p>`;
+                    return;
+                }
+
+                txs.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+                container.innerHTML = txs.map(tx => {
+                    const isDeposit = tx.type === 'deposit';
+                    return `
+                        <div class="glass-card p-3 rounded-xl border border-gray-800 space-y-2">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <span class="text-[9px] font-bold uppercase px-2 py-0.5 rounded ${isDeposit ? 'bg-emerald-500/20 text-emerald-400' : 'bg-red-500/20 text-red-400'}">
+                                        ${isDeposit ? 'Depósito' : 'Levantamento'}
+                                    </span>
+                                    <h4 class="text-xs font-bold text-white mt-1">${tx.userName} (+244 ${tx.userPhone})</h4>
+                                    <p class="text-sm font-bold text-gold-400">${tx.amount.toLocaleString('pt-AO')} Kz</p>
+                                    <p class="text-[10px] text-gray-400">${isDeposit ? 'Comprovativo: ' + (tx.proof || 'N/D') : 'Destino: ' + (tx.target || 'N/D')}</p>
+                                </div>
+                                <span class="text-[10px] font-bold text-gray-400">${tx.status.toUpperCase()}</span>
+                            </div>
+
+                            ${tx.status === 'pending' ? `
+                                <div class="flex space-x-2 pt-1">
+                                    <button onclick="approveTransaction('${tx.id}', '${tx.userId}', ${tx.amount}, '${tx.type}')" class="flex-1 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-lg">
+                                        Aprovar
+                                    </button>
+                                    <button onclick="rejectTransaction('${tx.id}', '${tx.userId}', ${tx.amount}, '${tx.type}')" class="flex-1 py-1.5 bg-red-600 hover:bg-red-500 text-white font-bold text-xs rounded-lg">
+                                        Rejeitar
+                                    </button>
+                                </div>
+                            ` : ''}
+                        </div>
+                    `;
+                }).join('');
+            });
+        }
+
+        // Ações do Admin em Transações
+        window.approveTransaction = async function(txId, targetUserId, amount, type) {
+            try {
+                const txRef = doc(db, 'artifacts', appId, 'public', 'data', 'transactions', txId);
+                await updateDoc(txRef, { status: 'approved' });
+
+                if (type === 'deposit') {
+                    // Adicionar ao Saldo do Cliente
+                    const userDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'users', targetUserId);
+                    const userSnap = await getDoc(userDocRef);
+                    if (userSnap.exists()) {
+                        const currentBal = userSnap.data().balance || 0;
+                        await updateDoc(userDocRef, { balance: currentBal + amount });
+                    }
+                }
+
+                showToast("Transação aprovada com sucesso!", "check-circle");
+            } catch (err) {
+                showToast("Erro ao aprovar transação.", "exclamation-circle");
+            }
+        };
+
+        window.rejectTransaction = async function(txId, targetUserId, amount, type) {
+            try {
+                const txRef = doc(db, 'artifacts', appId, 'public', 'data', 'transactions', txId);
+                await updateDoc(txRef, { status: 'rejected' });
+
+                if (type === 'withdraw') {
+                    // Devolver o saldo ao cliente caso o levantamento seja rejeitado
+                    const userDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'users', targetUserId);
+                    const userSnap = await getDoc(userDocRef);
+                    if (userSnap.exists()) {
+                        const currentBal = userSnap.data().balance || 0;
+                        await updateDoc(userDocRef, { balance: currentBal + amount });
+                    }
+                }
+
+                showToast("Transação rejeitada.", "info-circle");
+            } catch (err) {
+                showToast("Erro ao rejeitar transação.", "exclamation-circle");
+            }
+        };
+
+        // GUARDAR DEFINIÇÕES DA PLATAFORMA
+        window.handleSavePlatformSettings = async function(e) {
+            e.preventDefault();
+            const paypay = document.getElementById('adm-paypay-num').value.trim();
+            const express = document.getElementById('adm-express-iban').value.trim();
+            const ref = document.getElementById('adm-ref-code').value.trim();
+            const whatsapp = document.getElementById('adm-whatsapp-link').value.trim();
+
+            try {
+                const settingsDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'config', 'settings');
+                await setDoc(settingsDocRef, {
+                    paypay,
+                    express,
+                    ref,
+                    whatsapp
+                }, { merge: true });
+
+                showToast("Definições da plataforma guardadas na nuvem!", "check-circle");
+            } catch (err) {
+                showToast("Erro ao guardar definições.", "exclamation-circle");
+            }
+        };
+
+        // TOAST DE NOTIFICAÇÃO
+        window.showToast = function(message, iconName = 'info-circle') {
+            const toast = document.getElementById('toast');
+            const msgEl = document.getElementById('toast-message');
+            const iconEl = document.getElementById('toast-icon');
+
+            msgEl.innerText = message;
+            iconEl.className = `fas fa-${iconName} text-gold-500 font-bold text-xl`;
+
+            toast.classList.remove('hidden');
+            setTimeout(() => {
+                toast.classList.add('hidden');
+            }, 3500);
+        };
+
+        window.hideToast = function() {
+            document.getElementById('toast').classList.add('hidden');
+        };
+
+        window.openSupportWhatsApp = function() {
+            const link = window.appState.platformSettings.whatsapp || '#';
+            window.open(link, '_blank');
+        };
+
+        // INICIALIZAÇÃO GERAL
+        window.onload = function() {
+            renderPackages();
+            initAuth();
+        };
+    </script>
+</body>
+</html>
